@@ -1,4 +1,4 @@
-package common
+package structure
 
 type (
 	//Queue 队列

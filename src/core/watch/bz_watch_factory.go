@@ -5,8 +5,8 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	MyCommon "myagent/src/common"
 	MyTaskPools "github.com/wazsmwazsm/mortar"
+	"myagent/src/core/structure"
 	"reflect"
 	"sync"
 )
@@ -37,22 +37,22 @@ type (
 		//观察值
 		Value interface{}
 		//被观察代理队列<IObserver>
-		Observers *MyCommon.ArrayList
+		Observers *structure.ArrayList
 	}
 
 	//主题、值（拷贝传递)、被观察者
 	ValAndObservers struct {
 		Value     interface{}
 		//被观察代理队列<IObserver>
-		Observers *MyCommon.ArrayList
+		Observers *structure.ArrayList
 	}
 )
 
 //实现 初始化
-func (this *MyWatchFactory) Init() {
+func (this *MyWatchFactory) Init(num uint64) {
 	//初始化组件 : 核心存储初始化 + 任务信号队列
 	this.initWatchComponents()
-	this.initTaskPoolComponents(10)
+	this.initTaskPoolComponents(num)
 }
 
 //初始化组件 : 核心存储初始化 + 任务信号队列
@@ -117,7 +117,7 @@ func (this *MyWatchFactory) AddObserver(topic string, observer IObserver) error 
 		this.TopicLock.Lock()
 		if this.saveTopicAndValueAndObserver[topic] == nil {
 			this.saveTopicAndValueAndObserver[topic] = &ValueAndObservers{}
-			this.saveTopicAndValueAndObserver[topic].Observers = &MyCommon.ArrayList{}
+			this.saveTopicAndValueAndObserver[topic].Observers = &structure.ArrayList{}
 		}
 		this.TopicLock.Unlock()
 	}

@@ -1,10 +1,10 @@
 package myos
 
 import (
+	MyLog "myagent/src/core/log"
 	"os/exec"
 	"strings"
 	"time"
-	MyLog "myagent/src/log"
 )
 
 //继承自BaseSystemResult 的 命令处理返回结构体

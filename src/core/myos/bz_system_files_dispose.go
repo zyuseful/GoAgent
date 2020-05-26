@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/afero"
 	"io"
 	"io/ioutil"
-	MyLog "myagent/src/log"
+	MyLog "myagent/src/core/log"
 	"os"
 	"path"
 	"path/filepath"
@@ -31,7 +31,7 @@ type SystemFile struct {
 根据文件路径查看文件列表
 */
 func (systemFile *SystemFileResult) ListFiles(filePath string) {
-	defaultSystemFileResult(systemFile)
+	systemFile.defaultSystemFileResult()
 
 	dir, err := ioutil.ReadDir(filePath)
 	if err != nil {
@@ -65,7 +65,7 @@ func (systemFile *SystemFileResult) ListFiles(filePath string) {
 
 }
 
-func defaultSystemFileResult(result *SystemFileResult) {
+func (result *SystemFileResult)defaultSystemFileResult() {
 	result.BaseSystemResult.SetSystemToolSync(true)
 	result.BaseSystemResult.SetSystemToolType(DISPOSE_FILE_TYPE)
 	result.BaseSystemResult.SetSystemToolStartTime(time.Now())
