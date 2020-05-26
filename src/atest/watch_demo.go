@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/spf13/afero"
 	MyTaskPools "github.com/wazsmwazsm/mortar"
-	"myagent/src/common"
+	MyOS "myagent/src/core/myos"
+	"myagent/src/core/structure"
 	MyWatch "myagent/src/core/watch"
-	MyOS "myagent/src/myos"
 	"strconv"
 	"strings"
 	"sync"
@@ -61,7 +61,7 @@ func main2() {
 }
 
 func main4()  {
-	queue := common.Queue{}
+	queue := structure.Queue{}
 	queue.Push("Hello")
 	queue.Push("World")
 	pop := queue.Pop()
@@ -71,7 +71,7 @@ func main4()  {
 }
 
 func main5()  {
-	list := common.ArrayList{}
+	list := structure.ArrayList{}
 	list.Add("h1","h2","h3")
 	list.Print()
 	list.Add("asdfasdf","asdfasdfd")
@@ -126,23 +126,23 @@ func main6()  {
 	}
 }
 
-func main()  {
+func main并发()  {
 	c := make(chan bool,1)
 
 	factory := MyWatch.MyWatchFactory{}
-	factory.Init()
+	factory.Init(10)
 
 	/*
-	var w1 MyWatch.IObserver
-	var w2 MyWatch.IObserver
-	w1 = &s1{"s1"}
-	w2 = &s1{"s2"}
-	factory.AddObserver("S1",w1)
-	factory.AddObserver("S1",w2)
-	factory.AddObserver("S2",w1)
-	factory.UpdateValue("S1","Hello")
-	factory.UpdateValue("S1","World")
-	factory.UpdateValue("S2","World")
+		var w1 MyWatch.IObserver
+		var w2 MyWatch.IObserver
+		w1 = &s1{"s1"}
+		w2 = &s1{"s2"}
+		factory.AddObserver("S1",w1)
+		factory.AddObserver("S1",w2)
+		factory.AddObserver("S2",w1)
+		factory.UpdateValue("S1","Hello")
+		factory.UpdateValue("S1","World")
+		factory.UpdateValue("S2","World")
 	*/
 
 	for i:=0;i<5;i++ {
@@ -169,6 +169,34 @@ func main()  {
 	}
 	<-c
 }
+
+func main() {
+	c := make(chan bool,1)
+
+	factory := MyWatch.MyWatchFactory{}
+	factory.Init(10)
+
+	var w1 MyWatch.IObserver
+	var w2 MyWatch.IObserver
+
+	w1 = &TestObserver{"T1"}
+	w2 = &TestObserver{"T2"}
+
+	factory.AddObserver("topic_desc",w1);
+	factory.AddObserver("topic_desc",w2);
+
+	factory.UpdateValue("topic_desc","hello topic_desc")
+	<-c
+}
+
+type TestObserver struct {
+	Name string
+}
+func (this *TestObserver) WatchHandler(v interface{}) error {
+	fmt.Println("I am ",this.Name,"  do val:",v)
+	return nil
+}
+
 
 func testThread(factory *MyWatch.MyWatchFactory,name string,topic string) {
 	var w1 MyWatch.IObserver
