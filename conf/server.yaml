@@ -1,0 +1,15 @@
+server:
+  port: 8090
+  ip:
+  uploadSpace: /Users/zys/go/src/myagent/uploadFiles
+#  usingHttps
+#如果 usingHttps = false 则开启 http
+#如果 usingHttps = true 则开启 https
+#  autoHttps
+#当'usingHttps = true' 进行autoHttps判断
+# autoHttps = true 使用 echo的自动 https
+# autoHttps = false 使用自己私钥、证书
+  usingHttps: false
+  autoHttps: false
+  httpsCertFile: /Users/zys/go/src/myagent/uploadFiles/harbor-ca.crt
+  privateKeyFile: /Users/zys/go/src/myagent/uploadFiles/harbor-ca.key
