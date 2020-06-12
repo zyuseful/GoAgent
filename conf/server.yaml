@@ -1,15 +1,18 @@
 server:
+  name: macpro
   port: 8090
-  ip:
+  ip: 10.1.53.18
   uploadSpace: /Users/zys/go/src/myagent/uploadFiles
-#  usingHttps
+  usingHttps: false
 #如果 usingHttps = false 则开启 http
 #如果 usingHttps = true 则开启 https
-#  autoHttps
 #当'usingHttps = true' 进行autoHttps判断
 # autoHttps = true 使用 echo的自动 https
 # autoHttps = false 使用自己私钥、证书
-  usingHttps: false
   autoHttps: false
   httpsCertFile: /Users/zys/go/src/myagent/uploadFiles/harbor-ca.crt
   privateKeyFile: /Users/zys/go/src/myagent/uploadFiles/harbor-ca.key
+#是否开启节点关联 true:开启,false:关闭
+  usingAgent: true
+  checkTimes: 
+  checkTimesCronStr: 12121

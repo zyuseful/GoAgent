@@ -16,7 +16,10 @@ func NetServers(echoServer *MyWebCore.EchoServer) {
 	var testController MyWebController.IBaseController
 	testController = &MyWebController.TestController{}
 
-	initAndSetNets(echoServer, fileController, cmdController,testController)
+	var perceptionController MyWebController.IBaseController
+	perceptionController = &MyWebController.PerceptionController{}
+
+	initAndSetNets(echoServer, fileController, cmdController,testController,perceptionController)
 }
 
 func NetInit(currentConfig *MyConfig.MyConfig) *MyWebCore.EchoServer {

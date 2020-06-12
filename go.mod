@@ -12,8 +12,10 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/radovskyb/watcher v1.0.7 // indirect
+	github.com/robfig/cron/v3 v3.0.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/viper v1.7.0
+	github.com/wI2L/jettison v0.7.1 // indirect
 	github.com/wazsmwazsm/mortar v0.0.0-20200219023914-a103324340c2
 	golang.org/x/crypto v0.0.0-20200221231518-2aa609cf4a9d
 	gopkg.in/yaml.v2 v2.2.8 // indirect

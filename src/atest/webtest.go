@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"myagent/src/core/perception"
 
 	//Echo_Middleware "github.com/labstack/echo/v4/middleware"
 	"net/http"
 )
 
-func main() {
+func main1() {
 	/*
 		e := echo.New()
 		// e.AutoTLSManager.HostPolicy = autocert.HostWhitelist("<DOMAIN>")
@@ -68,4 +69,51 @@ func main() {
 			`)
 	})
 	e.Start(ipAndPort)
+}
+//func main() {
+//	fmt.Println(2 ^ 1)
+//}
+func main() {
+	node := perception.CreatePNode()
+
+	fmt.Printf("%b\n",node.State)
+	node.SetPNodeState(false,true,true)
+	fmt.Println("是否检查 come :",node.CheckComePNode())
+	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n",node.State)
+
+	node.SetPNodeState(true,true,false)
+	fmt.Println("是否检查 come :",node.CheckComePNode())
+	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n",node.State)
+
+	node.SetThisPNodeActive()
+	fmt.Println("是否检查 come :",node.CheckComePNode())
+	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n",node.State)
+
+	node.SetThisPNodeDeaded()
+	fmt.Println("是否检查 come :",node.CheckComePNode())
+	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n",node.State)
+
+	node.SetCheckComePNode()
+	fmt.Println("是否检查 come :",node.CheckComePNode())
+	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n",node.State)
+
+	node.SetNoCheckComePNode()
+	fmt.Println("是否检查 come :",node.CheckComePNode())
+	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n",node.State)
+
+	node.SetCheckComePNodeActive()
+	fmt.Println("是否检查 come :",node.CheckComePNode())
+	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n",node.State)
+	node.SetCheckComePNodeDeaded()
+	fmt.Println("是否检查 come :",node.CheckComePNode())
+	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n",node.State)
+
 }
