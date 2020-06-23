@@ -1,6 +1,7 @@
 package perception
 
 import (
+	"fmt"
 	"myagent/src/core/structure"
 	"sync"
 	"time"
@@ -40,11 +41,14 @@ var perceptionAgent *PerceptionAgent
 //初始化
 func init() {
 	perceptionAgent = new(PerceptionAgent)
+	perceptionAgent.MySelf = CreatePNode()
+	perceptionAgent.RootMap = make(map[string]*RsLine)
 }
 
 //---------------------获取方法集---------------------------
 func (this *PerceptionAgent) GetMySelfKey_NoLock() string {
-	return this.MySelf.GetPNodeIp()
+	//return this.MySelf.GetPNodeIp()
+	return this.MySelf.GetPNodeAddr()
 }
 
 /** 获取当前Agent 自己的 ADDR */
@@ -85,7 +89,7 @@ func (this *PerceptionAgent) UpdatePerceptionAgentRsLineSync(come *PerceptionAge
 	defer this.RWLock.Unlock()
 }
 
-/**  */
+/** 处理节点合并 + 节点计算 */
 func (this *PerceptionAgent) contrastAndUpdatePerceptionAgent(come *PerceptionAgent) {
 	//首先判断 是我自己还是外来
 	thisSelfKey := this.GetMySelfKey_NoLock()
@@ -96,7 +100,7 @@ func (this *PerceptionAgent) contrastAndUpdatePerceptionAgent(come *PerceptionAg
 		this.MySelf = come.MySelf
 		this.RootMap = come.RootMap
 	} else {
-		//---------------- 2、other 区更新 TODO ----------------
+		//---------------- 2、other 区更新 ----------------
 		/** 直接替换来 */
 		//不存在节点 -- 直接拿来
 		if nil == this.GetMySelfRsLines_NoLock() {
@@ -109,28 +113,38 @@ func (this *PerceptionAgent) contrastAndUpdatePerceptionAgent(come *PerceptionAg
 			//时间比对符合更新
 			if this.MySelf.UpTime.Unix() < (come.MySelf.UpTime.Unix() + nodeTimeContrast + Request_Time_Difference) {
 				this.RootMap[comeSelfKey] = come.GetMySelfRsLines_NoLock()
+				//更新时间
 				t := time.Now()
 				this.RootMap[comeSelfKey].LinealNode.SetPNodeLocalTime(t)
 				this.RootMap[comeSelfKey].LinealNode.SetPNodeUpTime(t)
 			}
 		}
 	}
+	//从新计算
 	this.comeAgentAppendToThisAgent(come)
 }
 
+//节点计算
 func (this *PerceptionAgent) comeAgentAppendToThisAgent(come *PerceptionAgent) {
+	//当前节点
+	localKey := this.GetMySelfKey_NoLock()
+	//other节点
 	keyArr := structure.ArrayList{}
 	for kv,_:=range this.RootMap {
-		if len(kv) > 0 {
+		if len(kv) > 0 && kv != localKey {
 			keyArr.Add(kv)
 		}
 	}
 
-	for i:=0;i<keyArr.Size();i++ {
-		getKey := keyArr.Get(i).(string)
-		rsline := come.TransformRootMapToRsLine(getKey)
-		this.TransformRsLineToRootMap(getKey,rsline)
-	}
+	//将对方的 MySelf 与自己MySelf 进行合并计算  -- 重要
+	//comeSelfLine := come.TransformRootMapToRsLine(come.GetMySelfKey_NoLock())
+	//
+	//for i:=0;i<keyArr.Size();i++ {
+	//	getKey := keyArr.Get(i).(string)
+	//	rsline := come.TransformRootMapToRsLine(getKey)
+	//	fmt.Println(rsline)
+	//	this.TransformRsLineToRootMap(getKey,rsline)
+	//}
 }
 
 /** RootMap 根据 rootKey 提取 转换为 RsLine */
@@ -156,32 +170,38 @@ func (this *PerceptionAgent) TransformRootMapToRsLine(rootKey string) *RsLine {
 	}
 	return result
 }
-func (this *PerceptionAgent) TransformRsLineToRootMap(rootKey string, rs *RsLine) {
-	//MySelf区更新
-	if this.GetMySelfKey_NoLock() == rootKey {
-		//TODO 更新判断
-		this.MySelf = rs.LinealNode
-	}
-
-	srcRsLine := this.RootMap[rootKey]
-	if nil == srcRsLine {
-		this.RootMap[rootKey] = CreateRsLine()
-	}
-
-	l1 := rs.LinealMap[rootKey]
-	for i:=0;i<l1.Size();i++ {
-		l2 := l1.Get(i).(structure.ArrayList)
-		node := l2.Get(0).(*PNode)
-		this.RootMap[rootKey].LinealMap[node.IP].Destroy()
-		if this.RootMap[rootKey].LinealMap[node.IP] == nil {
-			this.RootMap[rootKey].LinealMap[node.IP] = &structure.ArrayList{}
-		}
-		this.RootMap[rootKey].LinealNode = node
-		for j:=1;j<l2.Size();j++ {
-			this.RootMap[rootKey].LinealMap[node.IP].Add(l2.Get(j))
-		}
-	}
-}
+//
+//func (this *PerceptionAgent) TransformRsLineToRootMap(rootKey string, rs *RsLine) {
+//	//MySelf区更新
+//	if this.GetMySelfKey_NoLock() == rootKey {
+//		//1 为空直接拿来赋值  //2 对比更新 TODO
+//		if this.RootMap[rootKey] == nil || rs.LinealNode.UpTime.Unix() > (this.MySelf.UpTime.Unix()+Request_Time_Difference){
+//			this.MySelf.SetPNode(rs.LinealNode.GetPNodeName(),rs.LinealNode.GetPNodeIp(),rs.LinealNode.GetPNodePort())
+//			rs.LinealNode.SetPNodeUpTime(this.MySelf.UpTime)
+//			this.RootMap[rootKey] = rs
+//		}
+//	} else {
+//		//	Other区 -- 更新原始
+//		if nil == this.RootMap[rootKey] {
+//			this.RootMap[rootKey] = CreateRsLine()
+//		}
+//
+//		l1 := rs.LinealMap[rootKey]
+//		for i:=0;i<l1.Size();i++ {
+//			l2 := l1.Get(i).(structure.ArrayList)
+//			node := l2.Get(0).(*PNode)
+//			this.RootMap[rootKey].LinealMap[node.IP].Destroy()
+//			if this.RootMap[rootKey].LinealMap[node.IP] == nil {
+//				this.RootMap[rootKey].LinealMap[node.IP] = &structure.ArrayList{}
+//			}
+//			this.RootMap[rootKey].LinealNode = node
+//			for j:=1;j<l2.Size();j++ {
+//				this.RootMap[rootKey].LinealMap[node.IP].Add(l2.Get(j))
+//			}
+//		}
+//	}
+//
+//}
 
 /** 节点时间比对
 时间差 = 当前时间 - 请求时刻对方节点当前时间 - 传输时间
@@ -214,6 +234,5 @@ func (this *PerceptionAgent) InitMySelfRsLines() {
 		this.RootMap[this.GetMySelfKey_NoLock()] = CreateRsLine()
 	}
 
-	//TODO
-	//this.RootMap[this.GetMySelfKey_NoLock()].SetRsLine_LinealNode(time.Now())
+	this.RootMap[this.GetMySelfKey_NoLock()].SetRsLine_LinealNode(this.MySelf.GetPNodeName(),this.MySelf.GetPNodeIp(),this.MySelf.GetPNodePort())
 }

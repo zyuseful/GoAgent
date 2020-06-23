@@ -37,7 +37,7 @@ func main() {
 func Init() {
 	RUN_PATH = MyCommon.GetLocalPath()
 	//RUN_PATH = "/Users/zys/go/src/myagent/conf"
-	RUN_PATH = "/Users/zys"
+	RUN_PATH = "/Users/zys/conf/B"
 
 	CURRENT_CONFIG = MyCall.ConfigInit(RUN_PATH)
 	ECHO_SERVER = MyCall.NetInit(CURRENT_CONFIG)

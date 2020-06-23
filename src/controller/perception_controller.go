@@ -8,7 +8,6 @@ import (
 	MyPerceptionCore "myagent/src/core/perception"
 	MyWeb "myagent/src/core/web"
 	"net/http"
-	"time"
 )
 
 //url 常量
@@ -58,9 +57,7 @@ func (this *PerceptionController) SetLocalPerception() {
 		ip := this.GetParamFormEchoContext(context, "ip", 0)
 
 		MyPerceptionCore.GetPerceptionAgent().SetPerceptionAgent(name,ip,"")
-		MyPerceptionCore.GetPerceptionAgent().MySelf.
-		MyPerceptionCore.GetPerceptionAgent().MySelf.NodeUpTime = time.Now()
-		
+
 		return context.JSON(http.StatusOK, this.Success(MyPerceptionCore.GetPerceptionAgent().MySelf))
 	})
 }
@@ -104,6 +101,7 @@ func (this *PerceptionController) RegisterCome() {
 
 		agent := new(MyPerceptionCore.PerceptionAgent)
 		if err := context.Bind(agent); err != nil {
+			//TODO
 			return context.JSON(http.StatusOK, this.Failed("TODO",nil))
 		}
 

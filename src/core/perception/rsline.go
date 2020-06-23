@@ -23,7 +23,7 @@ func CreateRsLine_LinealMap() map[string]*structure.ArrayList{
 	return make(map[string]*structure.ArrayList)
 }
 
-func (this *RsLine) SetRsLine_LinealNode()  {
-
+func (this *RsLine) SetRsLine_LinealNode(name string,ip string,port string)  {
+	this.LinealNode.SetPNode(name,ip,port)
 }
 

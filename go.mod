@@ -3,6 +3,7 @@ module myagent
 go 1.14
 
 require (
+	github.com/deckarep/golang-set v1.7.1
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.0 // indirect
 	github.com/json-iterator/go v1.1.9 // indirect

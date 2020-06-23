@@ -57,9 +57,10 @@ func (this *PNode) SetPNode(name string, ip string, port string) {
 		this.ADDR = ip + ":" + port
 	}
 	this.SetThisPNodeActive()
-	t:=time.Now()
-	this.SetPNodeLocalTime(t)
-	this.SetPNodeUpTime(t)
+
+	tn := time.Now()
+	this.SetPNodeLocalTime(tn)
+	this.SetPNodeUpTime(tn)
 }
 
 func (this *PNode) SetPNodeUpTime(t time.Time) {
@@ -135,4 +136,11 @@ func (this *PNode) GetPNodeIp() string {
 
 func (this *PNode) GetPNodeAddr() string {
 	return this.ADDR
+}
+
+func (this *PNode) GetPNodePort() string {
+	return this.PORT
+}
+func (this *PNode) GetPNodeName() string {
+	return this.PORT
 }
