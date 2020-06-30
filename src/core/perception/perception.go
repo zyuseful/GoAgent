@@ -1,8 +1,7 @@
 package perception
 
 import (
-	"fmt"
-	"myagent/src/core/structure"
+	"github.com/deckarep/golang-set"
 	"sync"
 	"time"
 )
@@ -14,10 +13,10 @@ const (
 
 type PerceptionAgent struct {
 	//读写锁  --  一把锁
-	RWLock sync.RWMutex
+	rwLock sync.RWMutex
 	//当前Agent
-	MySelf  *PNode
-	RootMap map[string]*RsLine
+	mySelf  *PNode
+	rootMap map[string]*RsLine
 	/**
 	  	计算后的关系
 	  		----------------------------------------------------------------------------------------------
@@ -34,142 +33,260 @@ type PerceptionAgent struct {
 	  	   |     Other		|	   B	  |      		|
 	  		----------------------------------------------------------------------------------------------
 	*/
+	//顶点集合 <string> addr
+	apexNodes mapset.Set
+
+	//可到达定点 <string> addr  -- check服务填写
+	reachNodes mapset.Set
 }
 
+//单例
 var perceptionAgent *PerceptionAgent
 
+//--------------------------------- 初始化---------------------------------------
 //初始化
 func init() {
 	perceptionAgent = new(PerceptionAgent)
-	perceptionAgent.MySelf = CreatePNode()
-	perceptionAgent.RootMap = make(map[string]*RsLine)
+	perceptionAgent.mySelf = CreatePNode()
+	perceptionAgent.rootMap = make(map[string]*RsLine)
 }
 
-//---------------------获取方法集---------------------------
-func (this *PerceptionAgent) GetMySelfKey_NoLock() string {
-	//return this.MySelf.GetPNodeIp()
-	return this.MySelf.GetPNodeAddr()
-}
+/** 初始化 MySelfRsLines -- 供初始化时 Config使用
+相当于
+------------------------------------------
+	MySelf
+       A  -->  [A]
+  /|\			|Node:A
+------------------------------------------
+   |			|Map
+   |			|---[B]
+   |				 |--(C,D,E)
+   |			     |--(D,E)
+   |			|---[C]
+   |				 |--(D,E)
+   |				 |--(F)
+------------------------------------------
+*/
+func (this *PerceptionAgent) InitMySelfRsLinesSync(name string, ip string, port string) {
+	this.rwLock.Lock()
+	defer this.rwLock.Unlock()
 
-/** 获取当前Agent 自己的 ADDR */
-func (this *PerceptionAgent) GetMySelfADDR_NoLock() string {
-	return this.MySelf.ADDR
-}
-
-/** 获取myself RsLine 无锁 */
-func (this *PerceptionAgent) GetMySelfRsLines_NoLock() *RsLine {
-	this.CreateWhenMySelfRsLineIsNull_NoLock()
-	return this.RootMap[this.GetMySelfKey_NoLock()]
-}
-
-/** 检查myself RsLine 是否为空，若为空则创建 */
-func (this *PerceptionAgent) CreateWhenMySelfRsLineIsNull_NoLock() {
-	if this.RootMap[this.GetMySelfADDR_NoLock()] == nil {
-		this.RootMap[this.GetMySelfADDR_NoLock()] = CreateRsLine()
+	//RsLine init
+	if this.rootMap[this.GetMySelfKey()] == nil {
+		this.rootMap[this.GetMySelfKey()] = CreateRsLine()
 	}
+	//RsLine.InnerLine init
+	if this.rootMap[this.GetMySelfKey()] == nil {
+		this.rootMap[this.GetMySelfKey()] = CreateRsLine()
+	}
+
+	this.UpdateMySelfNode(name, ip, port)
+	this.apexNodes = mapset.NewSet()
 }
 
-/** 对外 设置 感知Agent 用于 controller 调用 */
-func (this *PerceptionAgent) SetPerceptionAgent(name string, ip string, port string) {
-	this.RWLock.Lock()
-	defer this.RWLock.Unlock()
-	this.MySelf.SetPNode(name, ip, port)
+//---------------------------------获取方法集---------------------------------------
+//获取当前 myself Node
+func (this *PerceptionAgent) GetMySelf() *PNode {
+	return this.mySelf
+}
+
+//获取当前 rootMap
+func (this *PerceptionAgent) GetRootMap() map[string]*RsLine {
+	return this.rootMap
+}
+//设置当前 rootMap
+func (this *PerceptionAgent) SetRootMap(comeRootMap map[string]*RsLine) {
+	this.rootMap = comeRootMap
+}
+
+//获取 MySelf Key
+func (this *PerceptionAgent) GetMySelfKey() string {
+	//return this.MySelf.GetPNodeIp()
+	return this.mySelf.GetAddr()
+}
+
+//根据 Addrkey 获取 *RsLine
+func (this *PerceptionAgent) GetRsLineByKey(addrKey string) *RsLine {
+	return this.rootMap[addrKey]
+}
+
+//根据 Addrkey 获取 *RsLine ,如果 *RsLine 为nil则创建
+func (this *PerceptionAgent) GetRsLineByKeyIfEmpty(addrKey string) *RsLine {
+	if nil == this.GetRsLineByKey(addrKey) {
+		this.rootMap[addrKey] = CreateRsLine()
+	}
+	return this.rootMap[addrKey]
+}
+
+func (this *PerceptionAgent) GetApexNodes() mapset.Set {
+	return this.apexNodes
+}
+func (this *PerceptionAgent) SetApexNodes(apexNodes mapset.Set) {
+	this.apexNodes.Clear()
+	this.apexNodes.Add(apexNodes)
+}
+func (this *PerceptionAgent) AddToApexNodes(addr string) {
+	this.apexNodes.Add(addr)
 }
 
 /** 对外 获取感知Agent */
 func GetPerceptionAgent() *PerceptionAgent {
 	return perceptionAgent
 }
+//---------------------------------复合更新---------------------------------------
+//更新 MySelfNode 同时更新 RsLine 中的 对应的 MySelfNode
+func (this *PerceptionAgent) UpdateMySelfNode(name string, ip string, port string) {
+	//设置 PerceptionAgent.MySelf
+	if nil == this.mySelf {
+		this.mySelf = CreatePNode()
+	}
+	tn := time.Now()
+
+	//记录原有Addr key
+	srcAddr := this.GetMySelfKey()
+	needChange := false
+
+	this.mySelf.SetPNodeAndTime(name, ip, port, tn)
+	nowAddr := this.GetMySelfKey()
+
+	//IP or Port 做出修改，则对应Map value地址需要调整
+	if srcAddr != nowAddr {
+		this.rootMap[nowAddr] = this.rootMap[srcAddr]
+		delete(this.rootMap, srcAddr)
+		needChange = true
+	}
+
+	thisRsLine := this.GetRsLineByKeyIfEmpty(this.GetMySelfKey())
+
+	//设置 PerceptionAgent.RootMap MySelf
+	thisRsLine.GetKeyNode().SetPNodeAndTime(name, ip, port, tn)
+	if needChange {
+		thisRsLine.linealMap[nowAddr] = thisRsLine.linealMap[srcAddr]
+		delete(thisRsLine.linealMap, srcAddr)
+	}
+}
+
+//---------------------------------Controller 调用---------------------------------------
+/** 对外 设置 感知Agent 用于 controller 调用 */
+func (this *PerceptionAgent) SetPerceptionAgentSync(name string, ip string, port string) {
+	this.rwLock.Lock()
+	defer this.rwLock.Unlock()
+	this.UpdateMySelfNode(name, ip, port)
+}
+
+//<=====
+
+
+/** 对外 对方节点向己方合并 */
+func (this *PerceptionAgent) RegisFromComeAgentSync(come *PerceptionAgent) {
+	this.rwLock.Lock()
+	defer this.rwLock.Unlock()
+
+	if come == nil {
+		return
+	}
+
+	//1 自关联注册 / 2 外来直系节点
+	if this.GetMySelfKey() == come.GetMySelfKey() {
+		//	自关联注册，比较时间后可直接更新
+		this.updateMySelfAgent(come)
+	} else {
+		this.updateOtherAgent(come)
+	}
+}
+
+//RegisFromComeAgent 调用 -- 自关联更新  -- 比较更新时间后进行更新
+func (this *PerceptionAgent) updateMySelfAgent(come *PerceptionAgent) {
+	//更新 MySelf
+	if this.GetMySelf().GetUpTime().Unix() < come.GetMySelf().GetUpTime().Unix() {
+		this.updatePerceptionAgent(come,0)
+	}
+}
+
+//RegisFromComeAgent 调用 -- Other更新  -- 比较更新时间后进行更新
+func (this *PerceptionAgent) updateOtherAgent(come *PerceptionAgent) {
+	this.updatePerceptionAgent(come,1)
+}
+
+//更新感知节点
+//come *PerceptionAgent 外来节点
+//0 : 当前节点更新 / 1 : 外来节点更新
+func (this *PerceptionAgent) updatePerceptionAgent(come *PerceptionAgent, selfOrOther int) {
+	//当前节点更新
+	if 0 == selfOrOther {
+		//1 更新myself Node
+		this.mySelf.SetPNode(come.mySelf.GetName(),come.mySelf.GetIp(),come.mySelf.GetPort())
+		//2 更新
+
+	} else  {
+	//外来节点更新
+	}
+}
+
+//<--
+func (this *PerceptionAgent) updatePAgent(come *PerceptionAgent) {
+	thisNodeSelf := this.GetMySelfKey()
+	comeNodeSelf := come.GetMySelfKey()
+
+	//当前节点更新
+	if thisNodeSelf == comeNodeSelf {
+		//1 更新myself Node
+		this.mySelf.SetPNode(come.mySelf.GetName(),come.mySelf.GetIp(),come.mySelf.GetPort())
+		//2 更新 RsLine.linealMap (myself + rsline)
+		this.SetRootMap(come.GetRootMap())
+		//3 更新定点
+		this.SetApexNodes(come.GetApexNodes())
+	} else {
+	/**
+	外来节点更新
+		1、直属节点更新
+						直属节点
+					  /			\
+		           无/            \有
+		 设置到 linealMap		 事件判断
+								/	    \
+		 					   /		 \
+				        无需更新		   需要更新(四种情况)：
+											1、"我"不在
+											2、"我"在行首
+											3、"我"在行未
+											4、"我"在行中
+
+		2、Other区更新
+
+		3、定点合并
+	*/
+
+	}
+}
 
 /** ------------  RelationshipLines 直系节点操作  ------------ */
 //添加 场景  1、myself 2、myself 添加 B
-func (this *PerceptionAgent) UpdatePerceptionAgentRsLineSync(come *PerceptionAgent) {
-	this.RWLock.Lock()
-	this.contrastAndUpdatePerceptionAgent(come)
-	defer this.RWLock.Unlock()
-}
-
-/** 处理节点合并 + 节点计算 */
-func (this *PerceptionAgent) contrastAndUpdatePerceptionAgent(come *PerceptionAgent) {
-	//首先判断 是我自己还是外来
-	thisSelfKey := this.GetMySelfKey_NoLock()
-	comeSelfKey := come.GetMySelfKey_NoLock()
-
-	//---------------- 1、myself MySelf区更新 ----------------
-	if thisSelfKey == comeSelfKey {
-		this.MySelf = come.MySelf
-		this.RootMap = come.RootMap
-	} else {
-		//---------------- 2、other 区更新 ----------------
-		/** 直接替换来 */
-		//不存在节点 -- 直接拿来
-		if nil == this.GetMySelfRsLines_NoLock() {
-			this.RootMap[comeSelfKey] = come.GetMySelfRsLines_NoLock()
-		} else {
-			//other区 -> myself区
-			var nodeTimeContrast int64
-			nodeTimeContrast = NodeTimeContrast(come)
-
-			//时间比对符合更新
-			if this.MySelf.UpTime.Unix() < (come.MySelf.UpTime.Unix() + nodeTimeContrast + Request_Time_Difference) {
-				this.RootMap[comeSelfKey] = come.GetMySelfRsLines_NoLock()
-				//更新时间
-				t := time.Now()
-				this.RootMap[comeSelfKey].LinealNode.SetPNodeLocalTime(t)
-				this.RootMap[comeSelfKey].LinealNode.SetPNodeUpTime(t)
-			}
-		}
-	}
-	//从新计算
-	this.comeAgentAppendToThisAgent(come)
-}
-
-//节点计算
-func (this *PerceptionAgent) comeAgentAppendToThisAgent(come *PerceptionAgent) {
-	//当前节点
-	localKey := this.GetMySelfKey_NoLock()
-	//other节点
-	keyArr := structure.ArrayList{}
-	for kv,_:=range this.RootMap {
-		if len(kv) > 0 && kv != localKey {
-			keyArr.Add(kv)
-		}
-	}
-
-	//将对方的 MySelf 与自己MySelf 进行合并计算  -- 重要
-	//comeSelfLine := come.TransformRootMapToRsLine(come.GetMySelfKey_NoLock())
-	//
-	//for i:=0;i<keyArr.Size();i++ {
-	//	getKey := keyArr.Get(i).(string)
-	//	rsline := come.TransformRootMapToRsLine(getKey)
-	//	fmt.Println(rsline)
-	//	this.TransformRsLineToRootMap(getKey,rsline)
-	//}
-}
 
 /** RootMap 根据 rootKey 提取 转换为 RsLine */
 func (this *PerceptionAgent) TransformRootMapToRsLine(rootKey string) *RsLine {
 	result := CreateRsLine()
-	srcRsLine := this.RootMap[rootKey]
+	//srcRsLine := this.RootMap[rootKey]
 
-	result.LinealNode = this.MySelf
-	if srcRsLine != nil {
-		//临时用来存储 源定位中的 key
-		keyList := &structure.ArrayList{}
-		for k, v := range srcRsLine.LinealMap {
-			if len(k) > 0 {
-				tempList := structure.ArrayList{}
-				tempList.Add(this.MySelf)
-				for i:=0;i<v.Size();i++ {
-					tempList.Add(v.Get(i))
-				}
-				keyList.Add(tempList)
-			}
-		}
-		result.LinealMap[rootKey] = keyList
-	}
+	//result.LinealNode = this.MySelf
+	//if srcRsLine != nil {
+	//	//临时用来存储 源定位中的 key
+	//	keyList := &structure.ArrayList{}
+	//	for k, v := range srcRsLine.LinealMap {
+	//		if len(k) > 0 {
+	//			tempList := structure.ArrayList{}
+	//			tempList.Add(this.MySelf)
+	//			for i:=0;i<v.Size();i++ {
+	//				tempList.Add(v.Get(i))
+	//			}
+	//			keyList.Add(tempList)
+	//		}
+	//	}
+	//	result.LinealMap[rootKey] = keyList
+	//}
 	return result
 }
+
 //
 //func (this *PerceptionAgent) TransformRsLineToRootMap(rootKey string, rs *RsLine) {
 //	//MySelf区更新
@@ -208,31 +325,12 @@ func (this *PerceptionAgent) TransformRootMapToRsLine(rootKey string) *RsLine {
 使用时：本地时间 + 时间差 后再做时间运算
 */
 func NodeTimeContrast(come *PerceptionAgent) int64 {
-	comeTimeUnix := come.MySelf.GetPNodeLocalTime().Unix()
+	comeTimeUnix := come.GetMySelf().GetLocalTime().Unix()
 	localTimeunix := time.Now().Unix()
 
 	var result int64
-	result = (localTimeunix - comeTimeUnix)
+	result = localTimeunix - comeTimeUnix
 	result -= Request_Time_Difference
 	return result
 }
 
-/** 初始化 MySelfRsLines
-相当于
-	|A | - | - |
-*/
-func (this *PerceptionAgent) InitMySelfRsLines() {
-	this.RWLock.Lock()
-	defer this.RWLock.Unlock()
-
-	//RsLine init
-	if this.RootMap[this.GetMySelfKey_NoLock()] == nil {
-		this.RootMap[this.GetMySelfKey_NoLock()] = CreateRsLine()
-	}
-	//RsLine.InnerLine init
-	if this.RootMap[this.GetMySelfKey_NoLock()] == nil {
-		this.RootMap[this.GetMySelfKey_NoLock()] = CreateRsLine()
-	}
-
-	this.RootMap[this.GetMySelfKey_NoLock()].SetRsLine_LinealNode(this.MySelf.GetPNodeName(),this.MySelf.GetPNodeIp(),this.MySelf.GetPNodePort())
-}

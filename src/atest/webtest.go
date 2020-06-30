@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"myagent/src/core/perception"
+	"myagent/src/core/structure"
 
 	//Echo_Middleware "github.com/labstack/echo/v4/middleware"
 	"net/http"
@@ -73,47 +74,76 @@ func main1() {
 //func main() {
 //	fmt.Println(2 ^ 1)
 //}
-func main() {
+func main2() {
 	node := perception.CreatePNode()
 
-	fmt.Printf("%b\n",node.State)
+	fmt.Printf("%b\n",node.GetState())
 	node.SetPNodeState(false,true,true)
 	fmt.Println("是否检查 come :",node.CheckComePNode())
 	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.State)
+	fmt.Printf("%b\n",node.GetState())
 
 	node.SetPNodeState(true,true,false)
 	fmt.Println("是否检查 come :",node.CheckComePNode())
 	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.State)
+	fmt.Printf("%b\n",node.GetState())
 
 	node.SetThisPNodeActive()
 	fmt.Println("是否检查 come :",node.CheckComePNode())
 	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.State)
+	fmt.Printf("%b\n",node.GetState())
 
 	node.SetThisPNodeDeaded()
 	fmt.Println("是否检查 come :",node.CheckComePNode())
 	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.State)
+	fmt.Printf("%b\n",node.GetState())
 
 	node.SetCheckComePNode()
 	fmt.Println("是否检查 come :",node.CheckComePNode())
 	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.State)
+	fmt.Printf("%b\n",node.GetState())
 
 	node.SetNoCheckComePNode()
 	fmt.Println("是否检查 come :",node.CheckComePNode())
 	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.State)
+	fmt.Printf("%b\n",node.GetState())
 
 	node.SetCheckComePNodeActive()
 	fmt.Println("是否检查 come :",node.CheckComePNode())
 	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.State)
+	fmt.Printf("%b\n",node.GetState())
 	node.SetCheckComePNodeDeaded()
 	fmt.Println("是否检查 come :",node.CheckComePNode())
 	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.State)
+	fmt.Printf("%b\n",node.GetState())
 
+}
+
+func main() {
+	list := structure.ArrayList{}
+	list.Add("A")
+	list.Add("B")
+	list.Add("C")
+	list.Add("D")
+
+	list.Print()
+	fmt.Println(list.Size())
+
+	list.AppendTo(1,"c","d","e","f")
+	//list.Add("c","d","e","f")
+	list.Print()
+	fmt.Println(list.Size())
+
+
+	list.AppendTo(list.Size()-1,"c1","d1","e1","f1")
+	list.Print()
+	fmt.Println(list.Size())
+
+	list.Add("AA","AB","AC","AD")
+	list.Print()
+	fmt.Println(list.Size())
+
+	list.Add("AE")
+	list.Print()
+	fmt.Println(list.Size())
 }

@@ -18,11 +18,7 @@ func AgentInit(currentConfig *MyConfig.MyConfig,cron *cron.Cron) {
 	}
 
 	//初始化 Myself Node
-	MyPerceptionCore.GetPerceptionAgent().SetPerceptionAgent(name,ip,port)
-	//初始化 Myself RsLines
-	MyPerceptionCore.GetPerceptionAgent().InitMySelfRsLines()
-	//初始化
-
+	MyPerceptionCore.GetPerceptionAgent().InitMySelfRsLinesSync(name,ip,port)
 
 	//如果使用 agent check 则添加定时任务 TODO
 	if currentConfig.GetServerCheckAgent() {

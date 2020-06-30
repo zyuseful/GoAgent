@@ -56,9 +56,9 @@ func (this *PerceptionController) SetLocalPerception() {
 		name := this.GetParamFormEchoContext(context, "name", 0)
 		ip := this.GetParamFormEchoContext(context, "ip", 0)
 
-		MyPerceptionCore.GetPerceptionAgent().SetPerceptionAgent(name,ip,"")
+		MyPerceptionCore.GetPerceptionAgent().UpdateMySelfNode(name,ip,"")
 
-		return context.JSON(http.StatusOK, this.Success(MyPerceptionCore.GetPerceptionAgent().MySelf))
+		return context.JSON(http.StatusOK, this.Success(MyPerceptionCore.GetPerceptionAgent()))
 	})
 }
 
@@ -85,7 +85,7 @@ func (this *PerceptionController) RegisterTo() {
 		fmt.Println(result)
 
 		//接收返回 Agent进行计算
-		MyPerceptionCore.GetPerceptionAgent().UpdatePerceptionAgentRsLineSync(result)
+		//MyPerceptionCore.GetPerceptionAgent().UpdatePerceptionAgentRsLineSync(result)
 
 		//给A 调用者发送消息
 		return context.JSON(http.StatusOK, this.Success("TODO"))
@@ -108,7 +108,7 @@ func (this *PerceptionController) RegisterCome() {
 		//TODO 计算
 		//TODO 发送
 		//B -> A
-		MyPerceptionCore.GetPerceptionAgent().UpdatePerceptionAgentRsLineSync(agent)
+		MyPerceptionCore.GetPerceptionAgent().RegisFromComeAgentSync(agent)
 		return context.JSON(http.StatusOK, MyPerceptionCore.GetPerceptionAgent())
 	})
 }
