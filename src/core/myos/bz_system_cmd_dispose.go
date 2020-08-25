@@ -1,6 +1,7 @@
 package myos
 
 import (
+	"fmt"
 	MyLog "myagent/src/core/log"
 	"os/exec"
 	"strings"
@@ -10,20 +11,20 @@ import (
 //继承自BaseSystemResult 的 命令处理返回结构体
 type SystemCommandResult struct {
 	BaseSystemResult
-	Result    string
+	Result interface{}
 }
 
 /**
 对外调用
 */
-func (sysDispose *SystemCommandResult) DoCommandWithCmdStr(osTool string, cmd string){
+func (sysDispose *SystemCommandResult) DoCommandWithCmdStr(osTool string, cmd string) {
 	defaultSystemCommand(sysDispose)
 	sysDispose.Dispose(osTool, cmd)
 }
 
-func (sysDispose *SystemCommandResult) Dispose(osTool string, cmd string){
+func (sysDispose *SystemCommandResult) Dispose(osTool string, cmd string) {
 	if len(cmd) <= 0 {
-		sysDispose.Fault( "")
+		sysDispose.Fault("")
 		return
 	}
 
@@ -43,22 +44,36 @@ func defaultSystemCommand(result *SystemCommandResult) {
 	result.BaseSystemResult.SetSystemToolStartTime(time.Now())
 }
 
-func successCmd(dispose *SystemCommandResult, reason string) *SystemCommandResult{
+func successCmd(dispose *SystemCommandResult, reason interface{}) *SystemCommandResult {
 	dispose.OK("")
 	dispose.Result = reason
 	return dispose
 }
 
-func cmdDispose(dispose *SystemCommandResult, osTool string, cmd string) *SystemCommandResult{
+func cmdDispose(dispose *SystemCommandResult, osTool string, cmd string) *SystemCommandResult {
 	out, err := exec.Command(osTool, "-c", cmd).Output()
 	if err != nil {
 		dispose.Fault(err.Error())
 		MyLog.Error(err.Error())
 		return dispose
 	}
-
+	fmt.Println(string(out))
 	return successCmd(dispose, string(out))
 }
+
+/*
+func cmdDispose(dispose *SystemCommandResult, osTool string, cmd string) *SystemCommandResult{
+	var outInfo bytes.Buffer
+	c := exec.Command(osTool, "-c", cmd)
+	// 设置接收
+	c.Stdout = &outInfo
+	// 执行
+	c.Run()
+
+	fmt.Println(outInfo.String())
+	return successCmd(dispose, outInfo.String())
+}
+*/
 
 func dispose2(dispose *SystemCommandResult, tool string, cmd string) {
 	splitIndex := strings.Index(cmd, " ")

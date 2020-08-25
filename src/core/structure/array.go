@@ -51,10 +51,8 @@ func (list *ArrayList) Remove(index int) interface{} {
 	if index < 0 || index >= list.size {
 		return nil
 	}
-
 	curEle := list.elements[index]
-	list.elements[index] = nil
-	copy(list.elements[index:], list.elements[index+1:list.size])
+	list.elements = append(list.elements[:index], list.elements[index+1:]...)
 	list.size--
 	return curEle
 }
@@ -72,6 +70,9 @@ func (list *ArrayList) IsEmpty() bool {
 
 func (list *ArrayList) Size() int {
 	return list.size
+}
+func (list *ArrayList) Elements() []interface{} {
+	return list.elements
 }
 func (list *ArrayList) Contains(value interface{}) (int, bool) {
 	for index, curValue := range list.elements {
@@ -110,6 +111,11 @@ func (list *ArrayList) Print() {
 	fmt.Println(list.elements)
 }
 
+/**
+追加操作
+index : 数组角标 范围 0~list.Size()
+
+*/
 func (list *ArrayList) AppendTo(index int, values ...interface{}) error {
 	//如果空间不足先进行扩容
 	if list.size+len(values) > len(list.elements) {
@@ -118,29 +124,63 @@ func (list *ArrayList) AppendTo(index int, values ...interface{}) error {
 	}
 
 	//计算追加元素以后的偏移量 , 该值 > 0说明是在源数组中间进行追加 =0 说明是在末尾追加 <0 说明数组越界
-	afterIndexNum := list.size - index - 1
 
-	if afterIndexNum < 0 {
+	if index < 0 {
 		var err error
-		fmt.Errorf("Fatal error config file: %s \n", err)
+		fmt.Errorf("index less than zero: %s \n", err)
 		return err
-	} else if afterIndexNum > 0 {
-		//中间追加，先将原index后的元素向后平移（这里不做 size++）
-		var i int
-		for i = 1; i <= afterIndexNum; i++ {
-			list.elements[list.size+afterIndexNum+i-1] = list.elements[index+i]
-		}
-		//将追加内容向空位进行插入 同时 size++
-		for i = 0; i < len(values); i++ {
-			list.elements[index+i+1] = values[i]
-			list.size++
-		}
+	} else if index > list.size {
+		var err error
+		fmt.Errorf("AppendTo index out of bounds: %s \n", err)
+		return err
 	} else {
-		//与原append模式一样处理
-		for _, value := range values {
-			list.elements[list.size] = value
+		var i int
+		var moveCounts int
+		//移动元素个数
+		moveCounts = list.size - index
+		for i = moveCounts - 1; i >= 0; i-- {
+			list.elements[index+i+len(values)] = list.elements[index+i]
+		}
+
+		for i = 0; i < len(values); i++ {
 			list.size++
+			list.elements[i+index] = values[i]
 		}
 	}
 	return nil
 }
+
+//func (list *ArrayList) AppendTo(index int, values ...interface{}) error {
+//	//如果空间不足先进行扩容
+//	if list.size+len(values) > len(list.elements) {
+//		arrLen := len(values)
+//		list.expand(list.size + arrLen + (list.size / 2))
+//	}
+//
+//	//计算追加元素以后的偏移量 , 该值 > 0说明是在源数组中间进行追加 =0 说明是在末尾追加 <0 说明数组越界
+//	afterIndexNum := list.size - index - 1
+//
+//	if afterIndexNum < 0 {
+//		var err error
+//		fmt.Errorf("Fatal error config file: %s \n", err)
+//		return err
+//	} else if afterIndexNum > 0 {
+//		//中间追加，先将原index后的元素向后平移（这里不做 size++）
+//		var i int
+//		for i = 1; i <= afterIndexNum; i++ {
+//			list.elements[list.size+afterIndexNum+i-1] = list.elements[index+i]
+//		}
+//		//将追加内容向空位进行插入 同时 size++
+//		for i = 0; i < len(values); i++ {
+//			list.elements[index+i+1] = values[i]
+//			list.size++
+//		}
+//	} else {
+//		//与原append模式一样处理
+//		for _, value := range values {
+//			list.elements[list.size] = value
+//			list.size++
+//		}
+//	}
+//	return nil
+//}

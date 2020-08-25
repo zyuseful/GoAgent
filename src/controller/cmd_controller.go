@@ -21,9 +21,9 @@ Contrller 写法
 
 //url 常量
 const (
-	CmdController__SyncCmd = "/CmdController/SyncCmd"
+	CmdController__SyncCmd           = "/CmdController/SyncCmd"
 	CmdController__UploadFileSyncCmd = "/CmdController/UploadFileSyncCmd"
-	CmdController__AllCmdEnv = "/CmdController/AllCmdEnv"
+	CmdController__AllCmdEnv         = "/CmdController/AllCmdEnv"
 )
 
 type CmdController struct {
@@ -46,7 +46,7 @@ func (this CmdController) SyncCmd() {
 		paramCmd := this.GetParamFormEchoContext(context, "cmd", 0)
 		paramTool := this.GetParamFormEchoContext(context, "tool", 0)
 		paramStr, b := this.NullParam(paramCmd, paramTool)
-		if !b {
+		if b {
 			return context.JSON(http.StatusOK, this.Failed(paramStr, nil))
 		}
 		paramCmd = this.MultilineCmdDispose(paramCmd)
@@ -63,7 +63,6 @@ func (this CmdController) AllCmdEnvCmd() {
 		return context.JSON(http.StatusOK, this.Success(envArr))
 	})
 }
-
 
 //上传脚本、文件后执行命令
 func (this CmdController) SyncCmdsAndFile() {
@@ -106,5 +105,3 @@ func (this CmdController) SyncCmdsAndFile() {
 		return context.JSON(http.StatusOK, this.Success(result))
 	})
 }
-
-

@@ -30,20 +30,20 @@ func main1() {
 	*/
 
 	/*
-	e := echo.New()
-	//certFile, keyFile string
-	certFile := "/Users/zys/go/src/myagent/uploadFiles/harbor-ca.crt"
-	keyFile := "/Users/zys/go/src/myagent/uploadFiles/harbor-ca.key"
+		e := echo.New()
+		//certFile, keyFile string
+		certFile := "/Users/zys/go/src/myagent/uploadFiles/harbor-ca.crt"
+		keyFile := "/Users/zys/go/src/myagent/uploadFiles/harbor-ca.key"
 
-	//e.TLSServer.ListenAndServeTLS(certFile,keyFile)
-	e.GET("/", func(c echo.Context) error {
-		return c.HTML(http.StatusOK, `
-				<h1>Welcome to Echo!</h1>
-				<h3>TLS certificates automatically installed from Let's Encrypt :)</h3>
-			`)
-	})
-	e.StartTLS(":8999",certFile,keyFile)
-	 */
+		//e.TLSServer.ListenAndServeTLS(certFile,keyFile)
+		e.GET("/", func(c echo.Context) error {
+			return c.HTML(http.StatusOK, `
+					<h1>Welcome to Echo!</h1>
+					<h3>TLS certificates automatically installed from Let's Encrypt :)</h3>
+				`)
+		})
+		e.StartTLS(":8999",certFile,keyFile)
+	*/
 
 	ipAndPort := ":8090"
 	e := echo.New()
@@ -71,55 +71,56 @@ func main1() {
 	})
 	e.Start(ipAndPort)
 }
+
 //func main() {
 //	fmt.Println(2 ^ 1)
 //}
 func main2() {
 	node := perception.CreatePNode()
 
-	fmt.Printf("%b\n",node.GetState())
-	node.SetPNodeState(false,true,true)
-	fmt.Println("是否检查 come :",node.CheckComePNode())
-	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.GetState())
+	fmt.Printf("%b\n", node.GetState())
+	node.SetPNodeState(false, true, true)
+	fmt.Println("是否检查 come :", node.CheckComePNode())
+	fmt.Println("节点是否存活   :", node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n", node.GetState())
 
-	node.SetPNodeState(true,true,false)
-	fmt.Println("是否检查 come :",node.CheckComePNode())
-	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.GetState())
+	node.SetPNodeState(true, true, false)
+	fmt.Println("是否检查 come :", node.CheckComePNode())
+	fmt.Println("节点是否存活   :", node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n", node.GetState())
 
 	node.SetThisPNodeActive()
-	fmt.Println("是否检查 come :",node.CheckComePNode())
-	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.GetState())
+	fmt.Println("是否检查 come :", node.CheckComePNode())
+	fmt.Println("节点是否存活   :", node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n", node.GetState())
 
 	node.SetThisPNodeDeaded()
-	fmt.Println("是否检查 come :",node.CheckComePNode())
-	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.GetState())
+	fmt.Println("是否检查 come :", node.CheckComePNode())
+	fmt.Println("节点是否存活   :", node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n", node.GetState())
 
 	node.SetCheckComePNode()
-	fmt.Println("是否检查 come :",node.CheckComePNode())
-	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.GetState())
+	fmt.Println("是否检查 come :", node.CheckComePNode())
+	fmt.Println("节点是否存活   :", node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n", node.GetState())
 
 	node.SetNoCheckComePNode()
-	fmt.Println("是否检查 come :",node.CheckComePNode())
-	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.GetState())
+	fmt.Println("是否检查 come :", node.CheckComePNode())
+	fmt.Println("节点是否存活   :", node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n", node.GetState())
 
 	node.SetCheckComePNodeActive()
-	fmt.Println("是否检查 come :",node.CheckComePNode())
-	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.GetState())
+	fmt.Println("是否检查 come :", node.CheckComePNode())
+	fmt.Println("节点是否存活   :", node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n", node.GetState())
 	node.SetCheckComePNodeDeaded()
-	fmt.Println("是否检查 come :",node.CheckComePNode())
-	fmt.Println("节点是否存活   :",node.CheckThisPNodeIsActive())
-	fmt.Printf("%b\n",node.GetState())
+	fmt.Println("是否检查 come :", node.CheckComePNode())
+	fmt.Println("节点是否存活   :", node.CheckThisPNodeIsActive())
+	fmt.Printf("%b\n", node.GetState())
 
 }
 
-func main() {
+func main3() {
 	list := structure.ArrayList{}
 	list.Add("A")
 	list.Add("B")
@@ -129,21 +130,32 @@ func main() {
 	list.Print()
 	fmt.Println(list.Size())
 
-	list.AppendTo(1,"c","d","e","f")
-	//list.Add("c","d","e","f")
+	list.AppendTo(1, "c", "d", "e", "f")
+	list.Print()
+	fmt.Println(list.Size())
+	//
+	//
+	list.AppendTo(list.Size(), "c1", "d1", "e1", "f1")
 	list.Print()
 	fmt.Println(list.Size())
 
-
-	list.AppendTo(list.Size()-1,"c1","d1","e1","f1")
+	list.AppendTo(list.Size()-1, "c11", "d11", "e11", "f11")
+	//list.AppendTo(8,"c1","d1","e1","f1")
 	list.Print()
 	fmt.Println(list.Size())
 
-	list.Add("AA","AB","AC","AD")
+	list.Add("AA", "AB", "AC", "AD")
 	list.Print()
 	fmt.Println(list.Size())
+}
 
-	list.Add("AE")
+func main() {
+	list := structure.ArrayList{}
+	list.Add("A")
+	list.Add("B")
+	list.Add("C")
+	list.Add("D")
+
+	list.Remove(4)
 	list.Print()
-	fmt.Println(list.Size())
 }
